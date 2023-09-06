@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import Index from ".";
 import { QueryClient, QueryClientProvider } from "react-query";
+import Index from "./Index";
 
 const page = () => {
   const queryClient = new QueryClient();
