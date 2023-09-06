@@ -1,8 +1,8 @@
 "use client";
+import React, { useState, useEffect, useTransition } from "react";
 import { Folder, File } from "@/components/Folder";
 import axiosInstance from "@/utilis/request";
 import { Input, Select, Spin } from "antd";
-import React, { useEffect, useState, useTransition } from "react";
 import { useMutation, useQuery } from "react-query";
 import { IoFilterOutline } from "react-icons/io5";
 import { LuSearch } from "react-icons/lu";
@@ -17,7 +17,7 @@ async function fetchFolders() {
   return res.data;
 }
 
-const page = () => {
+const Page = () => {
   const [foldersData, setFoldersData] = useState([]);
   const [filesData, setFilesData] = useState([]);
   const [breadcrumb, setBreadcrumb] = useState([{ name: "Home", id: null }]);
@@ -247,4 +247,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
