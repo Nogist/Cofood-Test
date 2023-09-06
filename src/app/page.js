@@ -1,113 +1,250 @@
-import Image from 'next/image'
+"use client";
+import { Folder, File } from "@/components/Folder";
+import axiosInstance from "@/utilis/request";
+import { Input, Select, Spin } from "antd";
+import React, { useEffect, useState, useTransition } from "react";
+import { useMutation, useQuery } from "react-query";
+import { IoFilterOutline } from "react-icons/io5";
+import { LuSearch } from "react-icons/lu";
+import dayjs from "dayjs";
+import { getFileType } from "@/utilis/FileType";
+import Preview from "@/components/Preview";
+import { ImHome3 } from "react-icons/im";
+import { AiOutlineRight } from "react-icons/ai";
 
-export default function Home() {
+async function fetchFolders() {
+  const res = await axiosInstance.get("");
+  return res.data;
+}
+
+const page = () => {
+  const [foldersData, setFoldersData] = useState([]);
+  const [filesData, setFilesData] = useState([]);
+  const [breadcrumb, setBreadcrumb] = useState([{ name: "Home", id: null }]);
+
+  const [_, startTransition] = useTransition();
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState("");
+  const [preview, setPreview] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const {
+    isLoading,
+    data: initialData,
+    refetch,
+  } = useQuery("/getFolders", () => fetchFolders());
+
+  const { isLoading: folderLoading, mutate } = useMutation(
+    async (id) => {
+      try {
+        const res = await axiosInstance.get(`/file/${id}`);
+        return res.data;
+      } catch (error) {
+        throw error;
+      }
+    },
+    {
+      onSuccess: (data) => {
+        const folderItems = data.filter((item) => item.type === "folder");
+        const fileItems = data.filter((item) => item.type !== "folder");
+        setFoldersData(folderItems);
+        setFilesData(fileItems);
+      },
+
+      onError: (error) => {
+        notification.error({
+          message: "Something went wrong",
+          description: error?.response?.data?.message,
+        });
+      },
+    }
+  );
+
+  useEffect(() => {
+    if (initialData) {
+      const folderItems = initialData.filter((item) => item.type === "folder");
+      const fileItems = initialData.filter((item) => item.type !== "folder");
+      setFoldersData(folderItems);
+      setFilesData(fileItems);
+    }
+  }, [initialData]);
+
+  const sortingItems = (value) => {
+    if (value === "2") {
+      setSortOrder("asc");
+    } else if (value === "3") {
+      setSortOrder("date");
+    } else {
+      setSortOrder("");
+    }
+  };
+
+  // Handle search input change
+  const handleSearch = (e) => {
+    startTransition(() => {
+      setSearch(e.target.value);
+      setTimeout(() => refetch(), 100);
+    });
+  };
+
+  const handleFileClick = (file) => {
+    const fileType = getFileType(file.name);
+    if (fileType === "image") {
+      setSelectedItem(file);
+      setPreview(true);
+    }
+  };
+
+  const handleFolderClick = (folder) => () => {
+    mutate(folder.id);
+    const newBreadcrumbItem = { name: folder.name, id: folder.id };
+    setBreadcrumb([...breadcrumb, newBreadcrumbItem]);
+  };
+
+  const handleBreadcrumbItemClick = (index) => {
+    const clickedBreadcrumb = breadcrumb[index];
+
+    if (clickedBreadcrumb.id === null) {
+      // When "Home" breadcrumb is clicked, reset to initial state
+      setFoldersData(initialData.filter((item) => item.type === "folder"));
+      setFilesData(initialData.filter((item) => item.type !== "folder"));
+
+      const updatedBreadcrumb = breadcrumb.slice(0, index + 1);
+      setBreadcrumb(updatedBreadcrumb);
+    } else {
+      const folderId = clickedBreadcrumb.id;
+      mutate(folderId);
+
+      const updatedBreadcrumb = breadcrumb.slice(0, index + 1);
+      setBreadcrumb(updatedBreadcrumb);
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="w-full flex flex-col mt-[110px] px-[100px] justify-center ">
+      <div className="flex items-center mb-[20px]">
+        {breadcrumb.map((item, index) => (
+          <span
+            key={item.id}
+            className={`flex items-center mr-2 ${
+              index === breadcrumb.length - 1
+                ? "text-[#2E3031] font-bold"
+                : "text-[#7A8085]"
+            }`}
           >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
+            {index !== 0 && <AiOutlineRight />}
+            <span
+              className={`cursor-pointer gap-2 ml-2 hover:bg-[#F2F5F7] hover:rounded p-2  ${
+                index === breadcrumb.length - 1
+                  ? "text-[#2E3031] font-bold"
+                  : ""
+              }`}
+              onClick={() => handleBreadcrumbItemClick(index)}
+            >
+              {index === 0 ? <ImHome3 /> : item.name}
+            </span>
+          </span>
+        ))}
       </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      <div className="flex items-center justify-between mb-[40px]">
+        <Select
+          defaultValue="1"
+          style={{ width: 114 }}
+          suffixIcon={
+            <IoFilterOutline color="#96999C" className="custom-select-arrow" />
+          }
+          onChange={(value) => sortingItems(value)}
+          options={[
+            { value: "1", label: "Sort" },
+            { value: "2", label: "By name" },
+            { value: "3", label: "By time created" },
+          ]}
+          className="font-avenir"
+        />
+
+        <Input
+          style={{ width: "255px" }}
+          placeholder="Search"
+          prefix={<LuSearch color="#B5B8BA" className="mr-2" />}
+          onChange={(e) => handleSearch(e)}
         />
       </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      <div className="">
+        <div className="flex flex-col gap-[24px] ">
+          <h2 className="text-[20px] font-semibold text-[#2E3031]">Folders</h2>
+          {isLoading || folderLoading ? (
+            <div>
+              <Spin></Spin>
+            </div>
+          ) : (
+            <div className=" flex items-center gap-[24px] ">
+              {foldersData?.map((item) => (
+                <Folder
+                  key={item.id}
+                  name={item?.name}
+                  data={10}
+                  onClick={handleFolderClick(item)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-[24px] my-[40px]">
+          <h2 className="text-[20px] font-semibold text-[#2E3031]">Files</h2>
+          {isLoading || folderLoading ? (
+            <div>
+              <Spin></Spin>
+            </div>
+          ) : (
+            <div className=" flex w-full items-center gap-[24px] justify-start flex-wrap">
+              {filesData
+                ?.filter((fil) => {
+                  const name = fil.name;
+                  return name.toLowerCase().includes(search.toLowerCase());
+                })
+                .sort((a, b) => {
+                  if (sortOrder === "asc") {
+                    const nameA = a.name.toLowerCase();
+                    const nameB = b.name.toLowerCase();
+                    return nameA.localeCompare(nameB);
+                  } else if (sortOrder === "date") {
+                    const dateA = new Date(a.created_at);
+                    const dateB = new Date(b.created_at);
+                    return dateA - dateB;
+                  } else {
+                    return 0;
+                  }
+                })
+                .map((item) => (
+                  <File
+                    key={item.id}
+                    placeholder={item?.src}
+                    name={item?.name}
+                    date={dayjs(item?.created_at).format("DD, MMMM, YYYY")}
+                    isFavourite={item.favourite}
+                    displayExtension={false}
+                    download={item?.src}
+                    onClick={() => handleFileClick(item)}
+                  />
+                ))}
+            </div>
+          )}
+        </div>
       </div>
-    </main>
-  )
-}
+      {preview && (
+        <Preview
+          modalOpen={preview}
+          modalClose={() => setPreview(false)}
+          displayExtension={false}
+          name={selectedItem?.name}
+          placeholder={selectedItem?.src}
+          date={dayjs(selectedItem?.created_at).format("DD, MMMM, YYYY")}
+          isFavourite={selectedItem?.favourite}
+        />
+      )}
+    </div>
+  );
+};
+
+export default page;

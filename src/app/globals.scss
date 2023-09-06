@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+* {
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.App {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  }
+
+  .boxShadow {
+    box-shadow: 0px 0px 14.00499px 0px rgba(0, 0, 0, 0.10);
+  }
+
+
+  /* Custom CSS for the select arrow icon */
+.custom-select-arrow::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 12px; /* Adjust the position as needed */
+  transform: translateY(-50%);
+}
+
+/* Apply your desired icon styles to the pseudo-element */
+.custom-select-arrow::after {
+  font-size: 18px; /* Adjust the font size as needed */
+  color: #333; /* Adjust the color as needed */
+}
+.favourite {
+  background-color: rgba(0, 0, 0, 0.28);
+  // background-color: yellow;
+backdrop-filter: blur(2px);
+}
