@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useTransition } from "react";
 import { Folder, File } from "@/components/Folder";
 import axiosInstance from "@/utilis/request";
-import { Input, Select, Spin } from "antd";
+import { Input, Select, Spin, notification } from "antd";
 import { useMutation, useQuery } from "react-query";
 import { IoFilterOutline } from "react-icons/io5";
 import { LuSearch } from "react-icons/lu";
@@ -32,7 +32,26 @@ const Page = () => {
     isLoading,
     data: initialData,
     refetch,
-  } = useQuery("/getFolders", () => fetchFolders());
+  } = useQuery(
+    "/getFolders",
+    () => fetchFolders(),
+    {
+      onSuccess: (data) => {
+        const folderItems = data.filter((item) => item.type === "folder");
+        const fileItems = data.filter((item) => item.type !== "folder");
+        setFoldersData(folderItems);
+        setFilesData(fileItems);
+      },
+    },
+    {
+      onError: (data) => {
+        notification.error({
+          message: " SOmething is wrong",
+          description: error?.response?.data?.message,
+        });
+      },
+    }
+  );
 
   const { isLoading: folderLoading, mutate } = useMutation(
     async (id) => {
@@ -59,15 +78,6 @@ const Page = () => {
       },
     }
   );
-
-  useEffect(() => {
-    if (initialData) {
-      const folderItems = initialData.filter((item) => item.type === "folder");
-      const fileItems = initialData.filter((item) => item.type !== "folder");
-      setFoldersData(folderItems);
-      setFilesData(fileItems);
-    }
-  }, [initialData]);
 
   const sortingItems = (value) => {
     if (value === "2") {
