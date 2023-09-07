@@ -3,12 +3,17 @@
 @tailwind utilities;
 
 
+ @import url('https://fonts.cdnfonts.com/css/euclid-circular-a');
+
+                
 * {
     box-sizing: border-box;
     scroll-behavior: smooth;
     padding: 0;
     margin: 0;
     list-style: none;
+    font-family: 'Euclid Circular A', sans-serif;
+                                                
 }
 
 .App {
