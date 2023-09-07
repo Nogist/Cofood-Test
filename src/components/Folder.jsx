@@ -9,8 +9,10 @@ import pdf from "@/assets/svg/pdfBig.svg";
 import excel from "@/assets/svg/excel.svg";
 import friends from "@/assets/image/friends.png";
 import { IoHeartOutline } from "react-icons/io5";
-import { BsHeartFill } from "react-icons/bs";
+import { BsFillCloudArrowDownFill, BsHeartFill } from "react-icons/bs";
 import { getFileType } from "@/utilis/FileType";
+import { notification } from "antd";
+import { RiPrinterFill } from "react-icons/ri";
 
 export function Folder({ name, data, onClick }) {
   return (
@@ -27,7 +29,7 @@ export function Folder({ name, data, onClick }) {
       />
       <div className="flex flex-col items-center  ">
         <span>
-          <p className="text-sm text-[#2E3031]">{name}</p>
+          <p className="text-sm text-[#2E3031] font-[500]">{name}</p>
           <p className="text-xs text-[#6F7376]">{data}mb</p>
         </span>
       </div>
@@ -57,6 +59,40 @@ export function File({
     ? name
     : name.split(".").slice(0, -1).join(".");
 
+  const handleDownload = (e, name) => {
+    e.preventDefault();
+    const link = document.createElement("a");
+    link.href = download;
+    link.download = name;
+    link.click();
+    console.log(name);
+
+    notification.info({
+      message: (
+        <span className="text-sm font-[500]  text-[#2E3031] ml-4">{name}</span>
+      ),
+      description: (
+        <div lassName="text-xs text-[#6F7376] ml-4 bg-[red]">
+          <span className="ml-4">369kb</span>
+          {" . "}
+          <span>53% done</span>
+        </div>
+      ),
+      icon: (
+        <div className="mr-2">
+          <Image
+            src={folder}
+            alt="folder"
+            objectFit="contain"
+            className="mr-4"
+            width={35}
+            height={35}
+          />
+        </div>
+      ),
+    });
+  };
+
   return (
     <div
       className="pt-[18px] pb-[16px] flex flex-col  px-[12px]  gap-[12px]  rounded-md boxShadow relative cursor-pointer "
@@ -85,11 +121,10 @@ export function File({
           <a
             href={download}
             target="_blank"
-            className="py-[67.5px] px-[92px]"
+            className="py-[67.5px] px-[92px] relative"
             download={name}
             onDoubleClick={(e) => {
-              e.preventDefault();
-              window.open(download, "_blank");
+              handleDownload(e, name);
             }}
             onClick={(e) => {
               e.preventDefault();
@@ -102,16 +137,25 @@ export function File({
               alt="image"
               objectFit="contain"
             />
+            <div className="absolute z-50 flex items-center gap-4 bottom-[10px] left-[8px] ">
+              <span className="  rounded-full border border-[#EAEBEB]">
+                <BsFillCloudArrowDownFill
+                  className="m-[7px] text-[#6E7377]"
+                  size={16}
+                />
+              </span>
+              <span className="rounded-full border border-[#EAEBEB]">
+                <RiPrinterFill className="m-[7px] text-[#6E7377]" size={16} />
+              </span>
+            </div>
           </a>
         ) : (
           <a
             href={download}
-            target="_blank"
-            className="py-[67.5px] px-[92px]"
+            className="py-[67.5px] px-[92px] relative "
             download={name}
             onDoubleClick={(e) => {
-              e.preventDefault();
-              window.open(download, "_blank");
+              handleDownload(e, name);
             }}
             onClick={(e) => {
               e.preventDefault();
@@ -124,6 +168,17 @@ export function File({
               alt="image"
               objectFit="contain"
             />
+            <div className="absolute z-50 flex items-center gap-4 bottom-[10px] left-[8px] ">
+              <span className="  rounded-full border border-[#EAEBEB]">
+                <BsFillCloudArrowDownFill
+                  className="m-[7px] text-[#6E7377]"
+                  size={16}
+                />
+              </span>
+              <span className="rounded-full border border-[#EAEBEB]">
+                <RiPrinterFill className="m-[7px] text-[#6E7377]" size={16} />
+              </span>
+            </div>
           </a>
         )}
       </div>
